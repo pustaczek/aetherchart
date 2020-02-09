@@ -4,8 +4,8 @@ use std::borrow::Cow;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Event<'a> {
-	/// On test data, happens to be `16614` on main thread, `16663` on thread 1, `16743` on frame
-	/// thread.
+	/// On test data, happens to be `16614` on main thread which is the renderer process. `16663`
+	/// on thread 1, `16743` on frame thread.
 	#[serde(rename = "pid")]
 	process_id: i64,
 	/// On test data, happens to be `12` on main thread and thread 1, but `11` on frame thread.
@@ -16,15 +16,14 @@ struct Event<'a> {
 	/// changing the offset to 0 removes all JS function calls from profiler graph.
 	#[serde(rename = "ts")]
 	timestamp: i64,
-	/// All profiler chunks have this set to `P`.
+	/// All profiler chunks have this set to `P`, thread and process names have `M`.
 	ph: &'a str,
-	/// JS funcions have `disabled-by-default-v8.cpu_profiler`.
+	/// All profiler chunks have this set to `disabled-by-default-v8.cpu_profiler`, thread and
+	/// process names have `__metadata`.
 	#[serde(rename = "cat")]
 	category: &'a str,
-	/// Entries that contain samples and stack trace information have this set to `ProfileChunk`.
-	/// This likely indicates the general type of an event. Instead of having args as an untagged
-	/// enum, it could be set to externally tagged with this, but that would require reading all
-	/// other variants' schemas.
+	/// All profiler chunks have this set to `ProfileChunk`, thread names to `thread_name`, process
+	/// names to `process_name`.
 	name: &'a str,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	dur: Option<i64>,
@@ -105,27 +104,45 @@ struct PC<'a> {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+struct TPN<'a> {
+	/// Thread name displayed on timeline view.
+	name: &'a str,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 enum Args<'a> {
 	#[serde(borrow)]
 	ProfileChunk(PC<'a>),
+	/// Not all threads have their name set this way, for example the main thread does not have an
+	/// entry. Also, not all threads present here are displayed on the timeline.
+	#[serde(borrow)]
+	ThreadProcessName(TPN<'a>),
 	Any(Json),
 }
 
+// The key thing is this:
+// {"pid":16614,"tid":2,"ts":26004743080,"ph":"B","cat":"xxx","name":"ParseCSS","args":{}},
+// {"pid":16614,"tid":2,"ts":26004743120,"ph":"E","cat":"xxx","name":"ParseCSS","args":{}},
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let profile = std::fs::read_to_string("experiments/profile.json")?;
-	let mut profile: Vec<Event> = serde_json::from_str(&profile)?;
-	for ev in &mut profile {
-		if let Args::ProfileChunk(pc) = &mut ev.args {
-			if let Some(ns) = &mut pc.data.cpu_profile.nodes {
-				for n in ns {
-					if n.call_frame.function_name == "window.updateTypography" {
-						n.call_frame.url = Some("https://rocket.rs".into());
-					}
-				}
-			}
-		}
-	}
-	std::fs::write("yoyo.json", serde_json::to_string(&profile)?)?;
+	let profile = std::fs::read_to_string("yoyo.json")?;
+	let profile: Vec<Event> = serde_json::from_str(&profile)?;
+	//	for ev in &mut profile {
+	//		if let Args::ProfileChunk(pc) = &mut ev.args {
+	//			if let Some(ns) = &mut pc.data.cpu_profile.nodes {}
+	//		}
+	//	}
+	std::fs::write(
+		"yoyo.json",
+		format!(
+			"[\n{}\n]",
+			profile
+				.iter()
+				.map(|ev| serde_json::to_string(ev).unwrap())
+				.collect::<Vec<_>>()
+				.join(",\n")
+		),
+	)?;
 	Ok(())
 }
