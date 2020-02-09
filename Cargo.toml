@@ -1,5 +1,5 @@
 [package]
-name = "aethergraph"
+name = "aetherchart"
 version = "0.0.0"
 authors = ["Mateusz Cegiełka <mateusz@cegla.net>"]
 edition = "2018"
