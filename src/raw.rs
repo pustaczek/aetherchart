@@ -7,6 +7,8 @@ pub enum Kind {
 	Begin,
 	#[serde(rename = "E")]
 	End,
+	#[serde(rename = "i")]
+	Instant,
 	#[serde(rename = "M")]
 	Metadata,
 }
@@ -24,5 +26,7 @@ pub struct Event<'a> {
 	#[serde(rename = "cat")]
 	pub category: &'a str,
 	pub name: &'a str,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub scope: Option<&'a str>,
 	pub args: Value,
 }

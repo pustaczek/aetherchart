@@ -3,5 +3,5 @@
 mod event;
 mod raw;
 
-pub use event::{Duration, Metadata};
+pub use event::{Duration, Instant, Metadata};
 pub use raw::Event;

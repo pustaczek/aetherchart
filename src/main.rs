@@ -1,4 +1,4 @@
-use aetherchart::{Duration, Event, Metadata};
+use aetherchart::{Duration, Event, Instant, Metadata};
 use std::fs::File;
 
 fn write_events(events: &[Event]) {
@@ -7,13 +7,15 @@ fn write_events(events: &[Event]) {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let metadata = Metadata::ThreadName { name: "Main thread" };
-	let parse_css = Duration::new("Parse CSS", "parse");
-	let paint_tree = Duration::new("Paint Tree", "paint");
+	let parse_css = Duration { name: "Parse CSS", category: "parse" };
+	let paint_tree = Duration { name: "Paint Tree", category: "paint" };
+	let finished_draw = Instant::Global { name: "PTF" };
 	let events = [
 		metadata.event(),
 		parse_css.start(),
 		paint_tree.start(),
 		paint_tree.end(),
+		finished_draw.event(),
 		parse_css.end(),
 	];
 	write_events(&events);
