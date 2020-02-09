@@ -1,5 +1,3 @@
-#![feature(thread_id_value)]
-
 mod central;
 mod event;
 mod raw;

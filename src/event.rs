@@ -1,7 +1,9 @@
 use crate::raw::{Event, Kind};
 use once_cell::sync::Lazy;
 use serde_json::{json, Value as Json};
-use std::time::Instant as Time;
+use std::{
+	sync::atomic::{AtomicU64, Ordering::SeqCst}, time::Instant as Time
+};
 
 static EPOCH: Lazy<Time> = Lazy::new(Time::now);
 
@@ -71,7 +73,7 @@ fn make_event<'e>(
 {
 	Event {
 		process_id: std::process::id() as u64,
-		thread_id: std::thread::current().id().as_u64(),
+		thread_id: thread_id(),
 		timestamp: EPOCH.elapsed().as_micros() as u64,
 		kind,
 		category,
@@ -79,4 +81,20 @@ fn make_event<'e>(
 		scope,
 		args,
 	}
+}
+
+fn thread_id() -> u64 {
+	static COUNTER: AtomicU64 = AtomicU64::new(1);
+	thread_local! {
+		static THREAD_ID: AtomicU64 = AtomicU64::new(0);
+	}
+	THREAD_ID.with(|thread_id| {
+		let cached = thread_id.load(SeqCst);
+		if cached != 0 {
+			cached
+		} else {
+			thread_id.compare_and_swap(0, COUNTER.fetch_add(1, SeqCst), SeqCst);
+			thread_id.load(SeqCst)
+		}
+	})
 }
