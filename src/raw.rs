@@ -1,3 +1,4 @@
+use crate::central::CENTRAL;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -14,6 +15,7 @@ pub enum Kind {
 }
 
 #[derive(Deserialize, Serialize)]
+#[must_use]
 pub struct Event<'a> {
 	#[serde(rename = "pid")]
 	pub process_id: u64,
@@ -29,4 +31,10 @@ pub struct Event<'a> {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub scope: Option<&'a str>,
 	pub args: Value,
+}
+
+impl Event<'static> {
+	pub fn send(self) {
+		CENTRAL.send(self);
+	}
 }
