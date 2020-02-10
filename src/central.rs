@@ -17,8 +17,6 @@ impl Central {
 	pub fn save_to(&self, path: impl AsRef<Path>, log: &Logger) {
 		let file = std::fs::File::create(path).unwrap();
 		let events = self.drain(log);
-		let validator = Validator::new(&events, log);
-		validator.validate();
 		let events = events.into_iter().map(chrome_dev_tools::Event::from).collect::<Vec<_>>();
 		serde_json::to_writer(file, &events).unwrap();
 	}
