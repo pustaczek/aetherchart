@@ -2,10 +2,11 @@ use crate::raw::{Event, Kind};
 use once_cell::sync::Lazy;
 use serde_json::{json, Value as Json};
 use std::{
-	sync::atomic::{AtomicU64, Ordering::SeqCst}, time::Instant as Time
+	sync::atomic::{AtomicU64, Ordering::SeqCst}, time::{Instant as MonoTime, UNIX_EPOCH}
 };
 
-static EPOCH: Lazy<Time> = Lazy::new(Time::now);
+static SYSTEM_TIME_OFFSET: Lazy<u128> = Lazy::new(|| UNIX_EPOCH.elapsed().unwrap().as_micros());
+static MONO_TIME_BASE: Lazy<MonoTime> = Lazy::new(MonoTime::now);
 
 pub struct Duration<'e> {
 	pub name: &'e str,
@@ -38,7 +39,7 @@ impl<'e> Duration<'e> {
 	}
 
 	fn make_event(&self, kind: Kind) -> Event<'e> {
-		make_event(kind, self.category, self.name, None, json!({}))
+		make_event(kind, Some(self.category), self.name, None, json!({}))
 	}
 }
 
@@ -49,7 +50,7 @@ impl<'e> Instant<'e> {
 			Instant::Process { name } => (name, "p"),
 			Instant::Global { name } => (name, "g"),
 		};
-		make_event(Kind::Instant, "", name, Some(scope), json!({}))
+		make_event(Kind::Instant, None, name, Some(scope), json!({}))
 	}
 }
 
@@ -59,13 +60,13 @@ impl<'e> Metadata<'e> {
 			Metadata::ProcessName { name } => ("process_name", json!({ "name": name })),
 			Metadata::ThreadName { name } => ("thread_name", json!({ "name": name })),
 		};
-		make_event(Kind::Metadata, "", name, None, args)
+		make_event(Kind::Metadata, None, name, None, args)
 	}
 }
 
 fn make_event<'e>(
 	kind: Kind,
-	category: &'e str,
+	category: Option<&'e str>,
 	name: &'e str,
 	scope: Option<&'e str>,
 	args: Json,
@@ -74,7 +75,7 @@ fn make_event<'e>(
 	Event {
 		process_id: std::process::id() as u64,
 		thread_id: thread_id(),
-		timestamp: EPOCH.elapsed().as_micros() as u64,
+		timestamp: *SYSTEM_TIME_OFFSET + MONO_TIME_BASE.elapsed().as_micros(),
 		kind,
 		category,
 		name,

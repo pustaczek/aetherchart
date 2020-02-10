@@ -22,11 +22,11 @@ pub struct Event<'a> {
 	#[serde(rename = "tid")]
 	pub thread_id: u64,
 	#[serde(rename = "ts")]
-	pub timestamp: u64,
+	pub timestamp: u128,
 	#[serde(rename = "ph")]
 	pub kind: Kind,
-	#[serde(rename = "cat")]
-	pub category: &'a str,
+	#[serde(rename = "cat", skip_serializing_if = "Option::is_none")]
+	pub category: Option<&'a str>,
 	pub name: &'a str,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub scope: Option<&'a str>,
