@@ -17,7 +17,7 @@ pub fn track_duration_ext(
 	Duration {
 		name: name.into(),
 		category: category.into(),
-		timestamp: os::timestamp(),
+		timestamp: 0,
 		process_id: os::process_id(),
 		thread_id: os::thread_id(),
 		start: true,
@@ -43,7 +43,8 @@ impl Duration {
 		Duration { thread_id, ..self }
 	}
 
-	pub fn guard(self) -> DurationGuard {
+	pub fn guard(mut self) -> DurationGuard {
+		self.timestamp = os::timestamp();
 		CENTRAL.send(Event::Duration(Duration {
 			name: self.name.clone(),
 			category: self.category.clone(),
@@ -56,10 +57,10 @@ impl Duration {
 
 impl Drop for DurationGuard {
 	fn drop(&mut self) {
+		self.duration.timestamp = os::timestamp();
 		CENTRAL.send(Event::Duration(Duration {
 			name: mem::replace(&mut self.duration.name, Cow::Owned(String::new())),
 			category: mem::replace(&mut self.duration.category, Cow::Owned(String::new())),
-			timestamp: os::timestamp(),
 			start: false,
 			..self.duration
 		}))

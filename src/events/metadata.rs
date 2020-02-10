@@ -18,7 +18,7 @@ pub fn track_thread_name(name: impl Into<Cow<'static, str>>) {
 pub fn track_thread_name_ext(name: impl Into<Cow<'static, str>>) -> Metadata {
 	Metadata {
 		name: name.into(),
-		timestamp: os::timestamp(),
+		timestamp: 0,
 		process_id: os::process_id(),
 		thread_id: os::thread_id(),
 		scope: Scope::Thread,
@@ -44,7 +44,8 @@ impl Metadata {
 		Metadata { thread_id, ..self }
 	}
 
-	pub fn emit(self) {
+	pub fn emit(mut self) {
+		self.timestamp = os::timestamp();
 		CENTRAL.send(Event::Metadata(Metadata { ..self }));
 	}
 }
