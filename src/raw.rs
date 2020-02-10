@@ -10,6 +10,8 @@ pub enum Kind {
 	End,
 	#[serde(rename = "i")]
 	Instant,
+	#[serde(rename = "R")]
+	Mark,
 	#[serde(rename = "M")]
 	Metadata,
 }

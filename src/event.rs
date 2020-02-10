@@ -21,6 +21,11 @@ pub enum Instant<'e> {
 	Global { name: &'e str },
 }
 
+pub struct Mark<'e> {
+	pub name: &'e str,
+	pub category: &'e str,
+}
+
 pub enum Metadata<'e> {
 	ProcessName { name: &'e str },
 	// ProcessLabels { labels: _ },
@@ -51,6 +56,12 @@ impl<'e> Instant<'e> {
 			Instant::Global { name } => (name, "g"),
 		};
 		make_event(Kind::Instant, None, name, Some(scope), json!({}))
+	}
+}
+
+impl<'e> Mark<'e> {
+	pub fn event(&self) -> Event<'e> {
+		make_event(Kind::Mark, Some(self.category), self.name, None, json!({}))
 	}
 }
 
