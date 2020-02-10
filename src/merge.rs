@@ -1,4 +1,4 @@
-use aetherchart::Event;
+use aetherchart::chrome_dev_tools;
 use std::io::stdout;
 
 fn main() {
@@ -9,7 +9,7 @@ fn main() {
 	let mut events = contents
 		.iter()
 		.flat_map(|file| {
-			let events: Vec<Event> = serde_json::from_str(&file).unwrap();
+			let events: Vec<chrome_dev_tools::Event> = serde_json::from_str(&file).unwrap();
 			events.into_iter()
 		})
 		.collect::<Vec<_>>();

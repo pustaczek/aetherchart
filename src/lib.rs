@@ -1,8 +1,11 @@
 mod central;
-mod event;
-mod raw;
+pub mod chrome_dev_tools;
+mod events;
+mod os;
 mod validate;
 
 pub use central::CENTRAL;
-pub use event::{Duration, Instant, Mark, Metadata};
-pub use raw::Event;
+pub use events::{
+	duration::{track_duration, track_duration_ext}, metadata::{track_process_name, track_thread_name, track_thread_name_ext}, Event
+};
+pub use os::new_virtual_thread_id;
