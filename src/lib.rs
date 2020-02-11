@@ -12,6 +12,6 @@ pub use events::{
 pub use virtual_thread::VirtualThread;
 
 #[doc(hidden)]
-pub use once_cell::sync::Lazy;
+pub use once_cell::sync::{Lazy, OnceCell};
 #[doc(hidden)]
 pub use os::new_virtual_thread_id;
